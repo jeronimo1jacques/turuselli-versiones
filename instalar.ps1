@@ -1,19 +1,27 @@
 # Instala Turuselli en una PC nueva bajando la ultima version publicada.
 # Se publica en el repo publico jeronimo1jacques/turuselli-versiones como "instalar.ps1".
 #
-# Uso: abrir PowerShell COMO ADMINISTRADOR y pegar:
-#   irm https://raw.githubusercontent.com/jeronimo1jacques/turuselli-versiones/main/instalar.ps1 | iex
+# Uso (cualquiera de las dos):
+#   a) Descargar este archivo, clic derecho -> "Ejecutar con PowerShell" (pide permisos solo).
+#   b) Abrir PowerShell COMO ADMINISTRADOR y pegar:
+#      irm https://raw.githubusercontent.com/jeronimo1jacques/turuselli-versiones/main/instalar.ps1 | iex
 #
 # Hace: busca el ultimo Release, baja el .zip y su .sha256, verifica la huella, descomprime
 # y corre el instalar.ps1 del paquete (el mismo que INSTALAR.bat).
 # Solo ASCII a proposito: al ejecutarse con "irm | iex" no hay problemas de codificacion.
 & {
+    param($archivo)   # ruta de este script si se ejecuto como archivo; vacio si fue con "irm | iex"
     $ErrorActionPreference = 'Stop'
     $ProgressPreference = 'SilentlyContinue'
     $repo = 'jeronimo1jacques/turuselli-versiones'
 
     $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
         [Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (-not $admin -and $archivo) {
+        # Ejecutado con clic derecho: se vuelve a abrir como administrador (Windows pregunta "Permitir?": Si)
+        Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$archivo`""
+        return
+    }
     if (-not $admin) {
         Write-Host ''
         Write-Host 'Hace falta abrir PowerShell como administrador:' -ForegroundColor Yellow
@@ -60,5 +68,6 @@
         Write-Host ''
         Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
         Write-Host 'Sacale una foto a esta pantalla y mandasela al tecnico.' -ForegroundColor Red
+        if ($archivo) { Read-Host "`nPresiona Enter para cerrar" }
     }
-}
+} $PSCommandPath
