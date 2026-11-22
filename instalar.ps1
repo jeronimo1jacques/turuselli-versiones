@@ -18,8 +18,15 @@
     $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
         [Security.Principal.WindowsBuiltInRole]::Administrator)
     if (-not $admin -and $archivo) {
-        # Ejecutado con clic derecho: se vuelve a abrir como administrador (Windows pregunta "Permitir?": Si)
-        Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$archivo`""
+        # Ejecutado con clic derecho: se vuelve a abrir como administrador (Windows pregunta "Permitir?": Si).
+        # -NoExit: la ventana nueva no se cierra sola, asi siempre se ve como termino.
+        Write-Host 'Pidiendo permisos de administrador (responde "Si" en el aviso de Windows)...' -ForegroundColor Cyan
+        try {
+            Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -NoExit -ExecutionPolicy Bypass -File `"$archivo`""
+        } catch {
+            Write-Host "No se pudo abrir como administrador: $($_.Exception.Message)" -ForegroundColor Red
+            Read-Host "`nPresiona Enter para cerrar"
+        }
         return
     }
     if (-not $admin) {
